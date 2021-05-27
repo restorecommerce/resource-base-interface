@@ -1,9 +1,10 @@
+/* eslint-disable quotes */
 'use strict';
 
 import * as mocha from 'mocha';
 import { ServiceBase } from '../lib';
 import { ResourcesAPIBase } from '../lib';
-import { toStruct } from '../lib';
+import { FilterOperation, FilterValueType } from '../lib/core/interfaces';
 import { toObject } from '../lib';
 import * as chassis from '@restorecommerce/chassis-srv';
 import { Client } from '@restorecommerce/grpc-client';
@@ -18,19 +19,55 @@ import * as _ from 'lodash';
  */
 
 /* global describe it before after beforeEach */
-describe('converting to struct back to object', () => {
-  it('should result in the same object', () => {
-    const obj = {
-      aNumber: {
-        $GT: 10,
-      },
-      $OR: [
-        { id: '/test/testdata' },
-        { id: '/test/testnew' },
-      ],
+describe('converting to filter to object', () => {
+  it('should convert proto filter to valid DB filter object', () => {
+    const protoFilter =
+    {
+      filters: {
+        filter: [
+          {
+            field: 'device_id',
+            operation: 'eq',
+            value: '12345'
+          },
+          {
+            field: 'overall_status',
+            operation: 'in',
+            value: '["BAD", "GOOD"]',
+            type: 'ARRAY'
+          },
+          {
+            field: 'device_active',
+            operation: 'eq',
+            value: 'true',
+            type: 'BOOLEAN'
+          },
+          {
+            filters: {
+              filter: [{
+                field: 'firstname',
+                operation: 'eq',
+                value: 'test_first'
+              }, {
+                field: 'lastname',
+                operation: 'eq',
+                value: 'test_last'
+              }, {
+                field: 'middleName',
+                operation: 'eq',
+                value: 'test_middle'
+              }],
+              operator: 'and'
+            },
+          }
+        ], // Default And case
+        operator: 'or'
+      }
     };
-    const struct = toStruct(obj);
-    obj.should.deepEqual(toObject(struct));
+    // eslint-disable-next-line quote-props
+    const expectedDBObject = { "$or": [{ "device_id": "12345" }, { "overall_status": { "$in": ["BAD", "GOOD"] } }, { "device_active": true }, { "$and": [{ "firstname": "test_first" }, { "lastname": "test_last" }, { "middleName": "test_middle" }] }] };
+    const dbFilter = toObject(protoFilter);
+    dbFilter.should.deepEqual(expectedDBObject);
   });
 });
 
@@ -194,13 +231,16 @@ describe('ServiceBase', () => {
         result.data.items.should.deepEqual(testDataDescending);
       });
       it('should return only resources with value higher than 10', async () => {
-        const filter = toStruct({
-          value: {
-            $gt: 10,
-          },
-        });
+        const filters = {
+          filter: {
+            field: 'value',
+            operation: FilterOperation.gt,
+            value: '10',
+            type: FilterValueType.NUMBER
+          }
+        };
         const result = await testService.read({
-          filter,
+          filters
         });
         should.exist(result);
         should.not.exist(result.error);
