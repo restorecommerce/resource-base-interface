@@ -350,6 +350,29 @@ describe('ServiceBase', () => {
           return (data.status === "BAD" || data.status === "UNKNOWN");
         }), 'id'));
       });
+      it('should return only resources with not equal filter', async () => {
+        const filters = {
+          filter: {
+            field: 'id',
+            operation: FilterOperation.neq,
+            value: '/test/xy',
+          }
+        };
+        const result = await testService.read({
+          filters
+        });
+        should.exist(result);
+        should.not.exist(result.error);
+        should.exist(result.data);
+        should.exist(result.data.items);
+        should.exist(result.data.total_count);
+        result.data.total_count.should.be.equal(2);
+        result.data.items.should.be.Array();
+        result.data.items.should.length(2);
+        _.sortBy(result.data.items, 'id').should.deepEqual(_.sortBy(_.filter(testData, (data) => {
+          return data.id != '/test/xy';
+        }), 'id'));
+      });
       it('should return elements only with field value', async () => {
         const result = await testService.read({
           field: [{

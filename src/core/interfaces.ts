@@ -13,7 +13,8 @@ export enum FilterOperation {
   gte = 4,
   isEmpty = 5,
   iLike = 6,
-  in = 7
+  in = 7,
+  neq = 8
 };
 
 export enum FilterValueType {

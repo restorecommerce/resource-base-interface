@@ -23,7 +23,7 @@ const convertFilterToObject = (filter, obj, operatorList) => {
   } else if (filter.type === 'ARRAY') {
     try {
       value = JSON.parse(filter.value);
-    } catch(err) {
+    } catch (err) {
       // to handle JSON string parse error
       if (err.message.indexOf('Unexpected token') > -1) {
         value = JSON.parse(JSON.stringify(filter.value));
@@ -48,6 +48,12 @@ const convertFilterToObject = (filter, obj, operatorList) => {
           temp.push({ [filter.field]: value });
         } else {
           temp[operatorList[i]].push({ [filter.field]: value });
+        }
+      } else if (filter.operation === 'neq') {
+        if (_.isArray(temp)) {
+          temp.push({ [filter.field]: { $not: { $eq: value } } });
+        } else {
+          temp[operatorList[i]].push({ [filter.field]: { $not: { $eq: value } } });
         }
       } else {
         const op = `$${filter.operation}`;
