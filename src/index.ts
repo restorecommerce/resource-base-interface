@@ -12,8 +12,8 @@ const convertFilterToObject = (filter, obj, operatorList) => {
   let value;
   if (!filter.type || filter.type === 'STRING') {
     value = filter.value;
-  } else if (filter.type === 'NUMBER') {
-    value = parseInt(filter.value);
+  } else if (filter.type === 'NUMBER' && !isNaN(filter.value)) {
+    value = Number(filter.value);
   } else if (filter.type === 'BOOLEAN') {
     if (filter.value === 'true') {
       value = true;
@@ -21,7 +21,18 @@ const convertFilterToObject = (filter, obj, operatorList) => {
       value = false;
     }
   } else if (filter.type === 'ARRAY') {
-    value = JSON.parse(filter.value);
+    try {
+      value = JSON.parse(filter.value);
+    } catch(err) {
+      // to handle JSON string parse error
+      if (err.message.indexOf('Unexpected token') > -1) {
+        value = JSON.parse(JSON.stringify(filter.value));
+      } else {
+        throw err;
+      }
+    }
+  } else if (filter.type === 'DATE') {
+    value = (new Date(filter.value)).getTime();
   }
 
   for (let i = 0; i < operatorList.length; i++) {
