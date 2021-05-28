@@ -125,3 +125,4 @@ import { ServiceBase } from './core/ServiceBase';
 export { ServiceBase };
 import { GraphResourcesServiceBase } from './core/GraphResourcesServiceBase';
 export { GraphResourcesServiceBase };
+export { Filter, FilterOp, FilterOperation, FilterValueType, OperatorType } from './core/interfaces';
