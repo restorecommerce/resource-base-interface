@@ -21,7 +21,7 @@
     "@restorecommerce/grpc-client": "^1.0.1",
     "@restorecommerce/kafka-client": "^1.0.2",
     "@restorecommerce/rc-grpc-clients": "^1.1.0",
-    "@restorecommerce/service-config": "^1.0.1",
+    "@restorecommerce/service-config": "^1.0.2",
     "lodash": "^4.17.21",
     "redis": "^4.3.1"
   },
