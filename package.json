@@ -26,7 +26,7 @@
     "redis": "^4.3.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.186",
+    "@types/lodash": "^4.14.189",
     "@types/mocha": "^10.0.0",
     "@types/redis": "^4.0.11",
     "@typescript-eslint/eslint-plugin": "^5.40.0",
