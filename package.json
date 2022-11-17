@@ -20,7 +20,7 @@
     "@restorecommerce/chassis-srv": "^1.1.2",
     "@restorecommerce/grpc-client": "^1.0.3",
     "@restorecommerce/kafka-client": "^1.0.4",
-    "@restorecommerce/rc-grpc-clients": "^2.0.1",
+    "@restorecommerce/rc-grpc-clients": "^2.0.2",
     "@restorecommerce/service-config": "^1.0.3",
     "lodash": "^4.17.21",
     "redis": "^4.3.1"
