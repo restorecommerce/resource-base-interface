@@ -19,7 +19,7 @@
   "dependencies": {
     "@restorecommerce/chassis-srv": "^1.2.1",
     "@restorecommerce/grpc-client": "^2.0.1",
-    "@restorecommerce/kafka-client": "^1.0.7",
+    "@restorecommerce/kafka-client": "^1.0.8",
     "@restorecommerce/rc-grpc-clients": "^3.0.1",
     "@restorecommerce/service-config": "^1.0.5",
     "lodash": "^4.17.21",
