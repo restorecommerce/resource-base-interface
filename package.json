@@ -17,7 +17,7 @@
     "interface"
   ],
   "dependencies": {
-    "@restorecommerce/chassis-srv": "^1.2.1",
+    "@restorecommerce/chassis-srv": "^1.2.2",
     "@restorecommerce/grpc-client": "^2.0.1",
     "@restorecommerce/kafka-client": "^1.0.7",
     "@restorecommerce/rc-grpc-clients": "^3.0.1",
