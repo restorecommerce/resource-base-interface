@@ -32,7 +32,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/eslint-plugin-tslint": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
-    "arangojs": "^8.4.1",
+    "arangojs": "^8.5.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.51.0",
     "eslint-plugin-prefer-arrow-functions": "^3.1.4",
