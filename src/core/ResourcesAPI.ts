@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import { errors } from '@restorecommerce/chassis-srv';
+import { Logger } from '@restorecommerce/logger';
 import * as uuid from 'uuid';
 import { Topic } from '@restorecommerce/kafka-client';
 import { BaseDocument, DocumentMetadata } from './interfaces';
@@ -73,11 +74,10 @@ const setDefaults = async (obj: { meta?: DocumentMetadata;[key: string]: any }, 
 
 const updateMetadata = (docMeta: DocumentMetadata, newDoc: BaseDocument, subject: Subject): BaseDocument => {
   if (_.isEmpty(newDoc.meta)) {
-    // docMeta.owner = newDoc.owner;
     throw new errors.InvalidArgument(`Update request holds no valid metadata for document ${newDoc.id}`);
   }
 
-  if (!_.isEmpty(newDoc.meta.owners)) {
+  if (!_.isEmpty(newDoc.meta?.owners)) {
     // if ownership is meant to be updated
     docMeta.owners = newDoc.meta.owners;
   }
@@ -93,19 +93,24 @@ const updateMetadata = (docMeta: DocumentMetadata, newDoc: BaseDocument, subject
  * Resource API base provides functions for CRUD operations.
  */
 export class ResourcesAPIBase {
-  bufferFields: string[];
-  requiredFields: any;
-  timeStampFields: string[];
-  resourceName: string;
-  logger: any;
+  public readonly bufferFields: string[];
+  public readonly requiredFields: any;
+  public readonly timeStampFields: string[];
+  public readonly resourceName: string;
   /**
    * @constructor
    * @param  {object} db Chassis arangodb provider.
    * @param {string} collectionName Name of database collection.
    * @param {any} fieldHandlerConf The collection's field generators configuration.
    */
-  constructor(private db: DatabaseProvider, private collectionName: string, fieldHandlerConf?: any,
-    private edgeCfg?: any, private graphName?: string, logger?: any) {
+  constructor(
+    public readonly db: DatabaseProvider,
+    public readonly collectionName: string,
+    fieldHandlerConf?: any,
+    public readonly edgeCfg?: any,
+    public readonly graphName?: string,
+    public readonly logger?: Logger
+  ) {
     this.resourceName = collectionName.substring(0, collectionName.length - 1);
 
     if (!fieldHandlerConf) {
@@ -166,8 +171,16 @@ export class ResourcesAPIBase {
    * @param {object} field key value, key=field value: 0=exclude, 1=include
    * @returns {an Object that contains an items field}
    */
-  async read(filter: Object = {}, limit = 1000, offset = 0,
-    sort: any = {}, field: any = {}, customQueries: string[] = [], customArgs: any = {}, search: DeepPartial<Search>): Promise<BaseDocument[]> {
+  async read(
+    filter: Object = {},
+    limit = 1000,
+    offset = 0,
+    sort: any = {},
+    field: any = {},
+    customQueries: string[] = [],
+    customArgs: any = {},
+    search: DeepPartial<Search>
+  ): Promise<BaseDocument[]> {
     const options = {
       limit: Math.min(limit, 1000),
       offset,
@@ -278,12 +291,12 @@ export class ResourcesAPIBase {
         }
         return result;
       }
-    } catch (e) {
-      this.logger.error('Error creating documents', { code: e.code, message: e.message, stack: e.stack });
+    } catch (error) {
+      this.logger?.error('Error creating documents', { code: error?.code, message: error?.message, stack: error?.stack });
       result.push({
         error: true,
-        errorNum: e.code,
-        errorMessage: e.details ? e.details : e.message
+        errorNum: error?.code,
+        errorMessage: error?.details ? error?.details : error?.message
       });
       return result;
     }
@@ -347,12 +360,12 @@ export class ResourcesAPIBase {
       deleteResponse = await this.db.delete(this.collectionName, ids);
       return deleteResponse;
     }
-    catch (err) {
-      this.logger.error('Error deleting documents', { code: err.code, message: err.message, stack: err.stack });
+    catch (error) {
+      this.logger?.error('Error deleting documents', { code: error?.code, message: error?.message, stack: error?.stack });
       deleteResponse.push({
         error: true,
-        errorNum: err.code,
-        errorMessage: err.details ? err.details : err.message
+        errorNum: error?.code,
+        errorMessage: error?.details ? error?.details : error?.message
       });
       return deleteResponse;
     }
@@ -395,11 +408,10 @@ export class ResourcesAPIBase {
     try {
       let createDocuments = [];
       let updateDocuments = [];
-      let dispatch = [];
-      dispatch = await Promise.all(documents.map(async (doc) => {
-        if (this.bufferFields && doc) {
-          doc = this.encodeOrDecode([doc], this.bufferFields, 'decode')[0];
-        }
+      if (this.bufferFields && documents) {
+        documents = this.encodeOrDecode(documents, this.bufferFields, 'decode');
+      }
+      const dispatch = await Promise.all(documents.map(async (doc) => {
         let foundDocs;
         if (doc && doc.id) {
           foundDocs = await this.db.find(this.collectionName, { id: doc.id }, {
@@ -452,11 +464,11 @@ export class ResourcesAPIBase {
 
       return result;
     } catch (error) {
-      this.logger.error('Error upserting documents', { code: error.code, message: error.message, stack: error.stack });
+      this.logger?.error('Error upserting documents', { code: error?.code, message: error?.message, stack: error?.stack });
       result.push({
         error: true,
-        errorNum: error.code,
-        errorMessage: error.details ? error.details : error.message
+        errorNum: error?.code,
+        errorMessage: error?.details ? error?.details : error?.message
       });
       return result;
     }
@@ -472,11 +484,15 @@ export class ResourcesAPIBase {
     let updateResponse = [];
     try {
       const collectionName = this.collectionName;
+      if (this.bufferFields && documents) {
+        documents = this.encodeOrDecode(documents, this.bufferFields, 'decode');
+      }
       let docsWithUpMetadata = await Promise.all(documents.map(async (doc) => {
-        if (this.bufferFields && doc) {
-          doc = this.encodeOrDecode([_.cloneDeep(doc)], this.bufferFields, 'decode')[0];
-        }
-        let foundDocs = await this.db.find(collectionName, { id: doc.id });
+        let foundDocs = await this.db.find(
+          collectionName,
+          { id: doc.id },
+          { limit: 1 }
+        );
         let dbDoc;
         if (foundDocs && foundDocs.length === 1) {
           dbDoc = foundDocs[0];
@@ -546,12 +562,12 @@ export class ResourcesAPIBase {
         updateResponse = this.encodeOrDecode(updateResponse, this.bufferFields, 'encode');
       }
       return updateResponse;
-    } catch (e) {
-      this.logger.error('Error updating documents', { code: e.code, message: e.message, stack: e.stack });
+    } catch (error) {
+      this.logger?.error('Error updating documents', { code: error?.code, message: error?.message, stack: error?.stack });
       updateResponse.push({
         error: true,
-        errorNum: e.code,
-        errorMessage: e.message
+        errorNum: error?.code,
+        errorMessage: error?.message
       });
       return updateResponse;
     }

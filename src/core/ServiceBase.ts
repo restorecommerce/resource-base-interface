@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { toObject } from '../index';
 import { ResourcesAPIBase } from './ResourcesAPI';
 import { Topic } from '@restorecommerce/kafka-client';
-import { Logger } from 'winston';
+import { Logger } from '@restorecommerce/logger';
 import {
   DeepPartial,
   DeleteRequest,
@@ -104,8 +104,7 @@ export class ServiceBase<T extends ResourceListResponse, M extends ResourceList>
         search
       )) || [];
 
-      let readResponseWithStatus = [];
-      objectEntities.map((object) => readResponseWithStatus.push({
+      const readResponseWithStatus = objectEntities.map((object) => ({
         payload: object,
         status: {
           code: 200,
@@ -115,7 +114,7 @@ export class ServiceBase<T extends ResourceListResponse, M extends ResourceList>
 
       return {
         items: readResponseWithStatus,
-        total_count: objectEntities.length,
+        total_count: readResponseWithStatus.length,
         operation_status: {
           code: 200,
           message: 'success'
@@ -178,10 +177,10 @@ export class ServiceBase<T extends ResourceListResponse, M extends ResourceList>
   private generateResponseWithStatus(responseItems: any[], inputItems: any[], deleteIds?: boolean) {
     let statusArray = [];
     let responseItemsWithStatus = [];
-    if (!_.isArray(responseItems)) {
-      responseItems = [responseItems];
+    if (!Array.isArray(responseItems)) {
+      responseItems = responseItems ? [responseItems] : [];
     }
-    if (!_.isArray(inputItems)) {
+    if (!Array.isArray(inputItems)) {
       inputItems = [inputItems];
     }
     for (let i = 0; i < responseItems.length; i++) {
@@ -375,7 +374,7 @@ export class ServiceBase<T extends ResourceListResponse, M extends ResourceList>
       let upsertDocs = _.cloneDeep(request.items);
       let upsertResponse = await this.resourceapi.upsert(
         upsertDocs,
-        this.events,
+        this.isEventsEnabled && this.events,
         this.name,
         request.subject
       );
